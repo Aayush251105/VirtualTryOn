@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import heroImage from './assets/hero-tryon.png';
+import demoPersonImage from './assets/demo_model.png';
+import demoGarmentImage from './assets/demo_garment.png';
+import demoResultImage from './assets/demo_output.png';
 import './App.css';
 
 const LOADING_STEPS = [
@@ -9,9 +12,9 @@ const LOADING_STEPS = [
   'Compositing final preview',
 ];
 
-const DEMO_PERSON_URL = 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&q=80';
-const DEMO_GARMENT_URL = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&q=80';
-const DEMO_RESULT_URL = 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&q=80';
+const DEMO_PERSON_URL = demoPersonImage;
+const DEMO_GARMENT_URL = demoGarmentImage;
+const DEMO_RESULT_URL = demoResultImage;
 
 function ThemeToggle({ theme, onToggle }) {
   const isDark = theme === 'dark';
@@ -186,6 +189,8 @@ function App() {
   const [isDemo, setIsDemo] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [category, setCategory] = useState('tops');
+  const [isFlatLay, setIsFlatLay] = useState(true);
   const [error, setError] = useState('');
   const tryOnRef = useRef(null);
   const progressRef = useRef(null);
@@ -213,13 +218,7 @@ function App() {
     localStorage.setItem('tryon-theme', theme);
   }, [theme]);
 
-  useEffect(() => {
-    return () => {
-      [personImage, garmentImage].forEach((image) => {
-        if (image?.url?.startsWith('blob:')) URL.revokeObjectURL(image.url);
-      });
-    };
-  }, [personImage, garmentImage]);
+
 
   const setImageFromFile = (setter) => (file) => {
     setError('');
@@ -284,6 +283,8 @@ function App() {
       const formData = new FormData();
       formData.append('person_image', personImage.file);
       formData.append('garment_image', garmentImage.file);
+      formData.append('category', category);
+      formData.append('is_flat_lay', isFlatLay);
 
       const response = await fetch('/api/tryon', {
         method: 'POST',
@@ -450,6 +451,43 @@ function App() {
             </div>
 
             {error && <p className="error-message" role="alert">{error}</p>}
+
+            <div className="config-panel" data-reveal>
+              <div className="config-group">
+                <span className="config-label">Garment Category</span>
+                <div className="segmented-control">
+                  {['tops', 'bottoms', 'one-pieces'].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`segment-btn ${category === cat ? 'active' : ''}`}
+                      onClick={() => setCategory(cat)}
+                    >
+                      {cat.replace('-', ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="config-group">
+                <span className="config-label">Garment Image Type</span>
+                <div className="segmented-control">
+                  <button
+                    type="button"
+                    className={`segment-btn ${isFlatLay ? 'active' : ''}`}
+                    onClick={() => setIsFlatLay(true)}
+                  >
+                    Flat-lay (on floor)
+                  </button>
+                  <button
+                    type="button"
+                    className={`segment-btn ${!isFlatLay ? 'active' : ''}`}
+                    onClick={() => setIsFlatLay(false)}
+                  >
+                    Model-worn
+                  </button>
+                </div>
+              </div>
+            </div>
 
             <div className="execute-panel">
               <span className={canGenerate ? 'ready-dot ready' : 'ready-dot'} />
